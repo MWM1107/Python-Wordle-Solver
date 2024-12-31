@@ -5,6 +5,7 @@
 remainingLetters = list(map(chr, range(97, 123)))
 excludedLetters = []
 correctLetters = ['', '', '', '', '']
+misplacedLetters = {}  # Dictionary to track misplaced letters
 guesses = 0
 
 def main():
@@ -42,6 +43,24 @@ def main():
             print("Do you have more correct letters? (y/n):")
             answer = input().lower()
         
+        # Process misplaced letters
+        print("Did you guess any letters correctly but in the wrong position? (y/n):")
+        answer = input().lower()
+        while answer == "y":
+            print("Enter the misplaced letter:")
+            letter = input().lower()
+            print("Enter the position it was in (0-4):")
+            position = int(input())
+            if 0 <= position <= 4:
+                if letter not in misplacedLetters:
+                    misplacedLetters[letter] = []
+                misplacedLetters[letter].append(position)
+            else:
+                print("Invalid position. Try again.")
+            
+            print("Do you have more misplaced letters? (y/n):")
+            answer = input().lower()
+
         # Process excluded letters
         print("Enter letters to exclude (one at a time). Type 'done' when finished:")
         while True:
@@ -52,7 +71,7 @@ def main():
                 excludedLetters.append(letter)
         
         # Filter word list based on user input
-        filteredWords = filter_words(wordList, correctLetters, excludedLetters)
+        filteredWords = filter_words(wordList, correctLetters, excludedLetters, misplacedLetters)
         if not filteredWords:
             print("No possible words found. Check your inputs!")
             break
@@ -65,12 +84,24 @@ def main():
     if guesses == 6:
         print("Game over! Better luck next time.")
 
-def filter_words(wordList, correctLetters, excludedLetters):
+def filter_words(wordList, correctLetters, excludedLetters, misplacedLetters):
     filtered = []
     for word in wordList:
-        if all(letter == '' or word[i] == letter for i, letter in enumerate(correctLetters)) and \
-           not any(letter in word for letter in excludedLetters):
-            filtered.append(word)
+        # Check correct letters
+        if not all(letter == '' or word[i] == letter for i, letter in enumerate(correctLetters)):
+            continue
+        
+        # Check excluded letters
+        if any(letter in word for letter in excludedLetters):
+            continue
+
+        # Check misplaced letters
+        if any(letter in word and word[i] == letter for letter, positions in misplacedLetters.items() for i in positions):
+            continue
+        if not all(letter in word for letter in misplacedLetters):
+            continue
+
+        filtered.append(word)
     return filtered
 
 main()
